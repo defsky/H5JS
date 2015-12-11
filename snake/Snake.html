@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sname demo - by def</title>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="">
+  <style>
+     * {
+	   margin: 0;
+	   padding: 0;
+	   background: #bbb;
+	 }
+	 #canvas {
+	   margin: 1px;
+	   background: #fff;
+	 }
+  </style>
+  <script type="text/javascript" src="utils.js"></script>
+  <script type="text/javascript">
+    window.onload=function(){
+	  var canvas=document.getElementById('canvas');
+	  var context = canvas.getContext('2d');
+	  
+	  var mouse = utils.captureMouse(canvas);
+	  
+	  function onMouseMove(){
+		context.lineTo(mouse.x, mouse.y);
+		context.stroke();
+	  }
+	  
+	  context.beginPath();
+	  context.rect(100,100,50,50);
+	  context.stroke();
+	};
+  </script>
+</head>
+<body>
+<canvas id="canvas" width="700" height="400">
+  <p>Your explorer NOT support Canvas!</p>
+</canvas>
+</body>
+</html>
