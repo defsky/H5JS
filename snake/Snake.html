@@ -18,21 +18,11 @@
 	 }
   </style>
   <script type="text/javascript" src="utils.js"></script>
+  <script type="text/javascript" src="snake.js"></script>
   <script type="text/javascript">
     window.onload=function(){
-	  var canvas=document.getElementById('canvas');
-	  var context = canvas.getContext('2d');
-	  
-	  var mouse = utils.captureMouse(canvas);
-	  
-	  function onMouseMove(){
-		context.lineTo(mouse.x, mouse.y);
-		context.stroke();
-	  }
-	  
-	  context.beginPath();
-	  context.rect(100,100,50,50);
-	  context.stroke();
+	  var myGame = SnakeGame('canvas');
+	  myGame.start();
 	};
   </script>
 </head>

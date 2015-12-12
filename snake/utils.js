@@ -37,6 +37,42 @@ utils.getElementsByClassName = function(className,context){
 	return rets;
 }
 
+/* captureKeyboard
+ * return the keycode which 'keydown' occured
+ */
+utils.captureKeyboard = function(element){
+  var keyboard = {
+	code: 0,
+	altKey: false,
+	ctrlKey: false,
+	shiftKey: false
+	};
+	
+  element.addEventListener('keydown',function(event){
+	console.log(event.keyCode);
+    keyboard.code = event.keyCode;
+	keyboard.altKey = event.altKey;
+	keyboard.ctrlKey = event.ctrlKey;
+	keyboard.shiftKey = event.shiftKey;
+  },false);
+  
+  element.addEventListener('keyup',function(event){
+    switch(event.keyCode){
+		case 18:
+			keyboard.altKey = event.altKey;
+			break;
+		case 17:
+			keyboard.ctrlKey = event.ctrlKey;
+			break;
+		case 16:
+			keyboard.shiftKey = event.shiftKey;
+			break;
+	}
+  },false);
+  
+  return keyboard;
+};
+
 /*	captureMouse
  *	return the position object of mouse
  */
@@ -118,7 +154,7 @@ utils.colorToRGB = function(color,alpha){
   var r = color >> 16 & 0xff;
   var g = color >> 8 & 0xff;
   var b = color & 0xff;
-  a = (alpha < 0) ? 0 : ((alpha > 1) ? 1 : alpha);//check range
+  var a = (alpha < 0) ? 0 : ((alpha > 1) ? 1 : alpha);//check range
   
   //use 'rgba' if needed
   if(a === 1){

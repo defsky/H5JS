@@ -2,8 +2,8 @@
  * Snake constructor
  *****************************************************************************
  * name	: snake name
- * x	: position x on map
- * y	: position y on map
+ * x	: head position x on map
+ * y	: head position y on map
  */
  function Snake(name,x,y){
 	/*************************************************************************/
@@ -38,11 +38,13 @@
  }//Snake constructor end
 
 /*
- * Map constructor
+ * SnakeMap constructor
  *****************************************************************************
  * context	: canvas context object
+ * width	: map width
+ * height	: map height
  */
- function Map(context){
+ function SnakeMap(context,width,height){
 	/*************************************************************************/
 	//private properties
 	/*************************************************************************/
@@ -68,8 +70,15 @@
 	// public interfaces
 	/*************************************************************************/
 	return {
+		init: function(){
+			if(_context == undefined){
+				throw Error("canvas context undefined");
+			}
+			_context.fillRect(10,10,100,100);
+		},
 		refresh: function(){
-			_generateSnack();
+			//_generateSnack();
+			_context.fillRect(110,110,50,50);
 		},
 		addSnake: function(snake){
 			_snakes.push(snake);
@@ -78,20 +87,22 @@
 			_snakes.pop();
 		}
 	};
- }//Map constructor end
+ }//SnakeMap constructor end
  
  /*
- * Engine constructor
- *****************************************************************************
- * context	: canvas context object
- */
- function Engine(context){
+  * SnakeGame constructor
+  ****************************************************************************
+  * canvasId	: string, representation canvas id 
+  */
+ function SnakeGame(canvasId){
 	/*************************************************************************/
 	//private properties
 	/*************************************************************************/
-	var _context = context;
+	var _context = {};
 	var _map = {};
 	var _snakes = [];
+	var _keyboard = {};
+	var _bStarted = false;
 
 	/*************************************************************************/
 	//private functions
@@ -100,15 +111,65 @@
 		return ;
 	};
 	
+	function _setMap(map){
+		_map = map;
+	}
+	
+	function _drawFrame(){
+		window.requestAnimationFrame(_drawFrame,_context);
+		//_processKeyboard();
+		_render();
+	}
+	
+	function _render(){
+		_map.refresh();
+	}
+	
+	function _processKeyboard(){
+		switch(_keyboard.code){
+			case 87://w
+				console.log("turn up");
+				break;
+			case 83://s
+				console.log("turn down");
+				break;
+			case 65://a
+				console.log("turn left");
+				break;
+			case 68://d
+				console.log("turn right");
+				break;
+			case 13://Enter
+				console.log("new snake");
+				break;
+			case 32://Space
+				console.log("pause/continue");
+				break;
+		}
+	}
+	
+	function _init(id){
+		var canvas = document.getElementById(id);
+		
+		_keyboard = utils.captureKeyboard(window);
+		
+		if (canvas == undefined){
+			throw Error("element id "+id+" is not defined");
+		}
+		_context = canvas.getContext('2d');
+		
+		_map = SnakeMap(_context,canvas.width,canvas.height);
+		_map.init();
+		
+		_drawFrame();
+	}
+	
 	/*************************************************************************/
 	// public interfaces
 	/*************************************************************************/
 	return {
-		setMap: function(map){
-			_map = map;
-		},
 		start: function(){
-		
+			_init(canvasId);
 		}
 	};
- }//Engine constructor end
+ }//SnakeGame constructor end
