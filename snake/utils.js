@@ -41,6 +41,8 @@ utils.getElementsByClassName = function(className,context){
  * return the keycode which 'keydown' occured
  */
 utils.captureKeyboard = function(element){
+  _callbacks = [];
+  
   var keyboard = {
 	code: 0,
 	altKey: false,

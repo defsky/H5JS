@@ -49,15 +49,11 @@
 	//private properties
 	/*************************************************************************/
 	var _context = context;
-	var _width = 3;
-	var _height = 3;
+	var _mapWidth = (width==undefined) ? 0 : (width / 5);
+	var _mapHeight = (height==undefined) ? 0 : (height / 5);
 	
 	var _snakes = [];
-	var _mapState = [
-		[0,0,0],
-		[0,0,0],
-		[0,0,0]
-	];
+	var _mapState = [];
 
 	/*************************************************************************/
 	//private functions
@@ -74,11 +70,14 @@
 			if(_context == undefined){
 				throw Error("canvas context undefined");
 			}
+			if(_mapWidth == 0 || _mapHeight == 0){
+				throw Error("map Width or Height not specified");
+			}
 			_context.fillRect(10,10,100,100);
 		},
 		refresh: function(){
 			//_generateSnack();
-			_context.fillRect(110,110,50,50);
+			_context.fillRect(110,110,5,5);
 		},
 		addSnake: function(snake){
 			_snakes.push(snake);
@@ -99,6 +98,8 @@
 	//private properties
 	/*************************************************************************/
 	var _context = {};
+	var _contextWidth = 0;
+	var _contextHeight = 0;
 	var _map = {};
 	var _snakes = [];
 	var _keyboard = {};
@@ -118,15 +119,21 @@
 	function _drawFrame(){
 		window.requestAnimationFrame(_drawFrame,_context);
 		//_processKeyboard();
-		_render();
+		//_render();
+		_updateSnakeStatus(_snakes);
+		_map.refresh();
+	}
+	
+	function _updateSnakeStatus(snakes){
+	
 	}
 	
 	function _render(){
 		_map.refresh();
 	}
 	
-	function _processKeyboard(){
-		switch(_keyboard.code){
+	function _callbackProcessKeyboard(event){
+		switch(event.keyCode){
 			case 87://w
 				console.log("turn up");
 				break;
@@ -150,15 +157,18 @@
 	
 	function _init(id){
 		var canvas = document.getElementById(id);
+		_contextWidth = canvas.width;
+		_contextHeight = canvas.height;
 		
-		_keyboard = utils.captureKeyboard(window);
+		//_keyboard = utils.captureKeyboard(window);
+		window.addEventListener('keydown',_callbackProcessKeyboard,false);
 		
 		if (canvas == undefined){
 			throw Error("element id "+id+" is not defined");
 		}
 		_context = canvas.getContext('2d');
 		
-		_map = SnakeMap(_context,canvas.width,canvas.height);
+		_map = SnakeMap(_context,_contextWidth,_contextHeight);
 		_map.init();
 		
 		_drawFrame();
