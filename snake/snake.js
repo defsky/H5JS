@@ -12,6 +12,11 @@ const DIRECTION = {
  * x	: head position x on map
  * y	: head position y on map
  */
+ function SnakeItem(x,y){
+	this.X = x || 0;
+	this.Y = y || 0;
+ }
+ 
  function Snake(name,x,y){
 	/*************************************************************************/
 	//private properties
@@ -20,15 +25,20 @@ const DIRECTION = {
 	var _name = name;
 	
 	//var _posX = x || 70;//according to map size
-	//var _posY = y || 40;//according to map size
-	var _body = [{X:70,Y:40},{X:69,Y:40},{X:68,Y:40}];
+	//var _posY = y || 40;//according to map size 
+	var _head = new SnakeItem(70,40);
+	var _body = [_head];
 	var _direction = DIRECTION.RIGHT;
+	var _nextDirection = [];
 	var _length = 3;//3-1000
-	var _speed = 10;//0-100
+	var _speed = 400;//0-100
+	var _speedMode = 1;//1:Normal,2:Speed up
 	
-	var _timer = new Date();
-	var _lastMoveTime = _timer.getTime();
+	var _lastMoveTime = (new Date()).getTime();
 	
+	for(var i=0;i<_length-1;i++){
+		_body.push(new SnakeItem(_body[i].X - 1,_body[i].Y));
+	}
 	/*************************************************************************/
 	//private functions
 	/*************************************************************************/
@@ -36,6 +46,48 @@ const DIRECTION = {
 		return 1000;
 	};
 	
+	function _stepForward(body,seqno,newPos){
+		if(typeof(body[seqno+1]) !== "undefined"){
+			_stepForward(body,seqno+1,body[seqno]);
+		}
+		body[seqno].X = newPos.X;
+		body[seqno].Y = newPos.Y;
+	}
+	
+	function _getNextPos(){
+		var nextPos={};
+		nextPos.X = _body[0].X;
+		nextPos.Y = _body[0].Y;
+		
+		switch(_direction){
+			case DIRECTION.LEFT:
+				nextPos.X -= 1;
+				break;
+			case DIRECTION.UP:
+				nextPos.Y -= 1;
+				break;
+			case DIRECTION.RIGHT:
+				nextPos.X += 1;
+				break;
+			case DIRECTION.DOWN:
+				nextPos.Y += 1;
+				break;
+		}
+		
+		return nextPos;
+	}
+	
+	function _hasSnack(pos,map){
+		if(map.snack.X == pos.X && map.snack.Y == pos.Y){
+			return true;
+		}
+		return false;
+	}
+	
+	function _eatSnack(snack){
+		_length = _body.unshift(new SnakeItem(snack.X,snack.Y));
+		//_length += 1;
+	}
 	/*************************************************************************/
 	// public interfaces
 	/*************************************************************************/
@@ -45,39 +97,54 @@ const DIRECTION = {
 		getX:function(i){ return _body[i].X; },
 		getY:function(i){ return _body[i].Y; },
 		get length(){ return _length; },
-		move: function(){
-			var oldTime = _lastMoveTime;
-			_lastMoveTime = (new Date()).getTime();
+		move: function(map){
+			var curTime = (new Date()).getTime();
 			
-			if( _lastMoveTime - oldTime > 530){
-				var prePos = _body[0];
-				
-				switch(_direction){
-					case DIRECTION.LEFT:
-						_body[0].X -= 1;
-						break;
-					case DIRECTION.UP:
-						_body[0].Y -= 1;
-						break;
-					case DIRECTION.RIGHT:
-						_body[0].X += 1;
-						break;
-					case DIRECTION.DOWN:
-						_body[0].Y += 1;
-						break;
+			if( curTime - _lastMoveTime > _speed ){
+				//console.log("snake moved:"+"_lastMoveTime("+_lastMoveTime+")-curTime("+curTime+")="+(curTime - _lastMoveTime));
+				/*if(_nextDirection.length > 0){
+					var newDirection = _nextDirection.shift();
+					if(newDirection + _direction != 0){
+						_direction = newDirection;
+					}
+				}*/
+				if(_nextDirection.length > 0){
+					do{
+						var newDirection = _nextDirection.shift();
+						
+						if(Math.abs(_direction) != Math.abs(newDirection)){
+							_direction = newDirection;
+							break;
+						}
+					}while(_nextDirection.length > 0);
 				}
+					
+				_lastMoveTime = curTime;
 				
-				var curPos = {};
-				for(var i=1;i<_body.length;i++){
-					curPos = _body[i];
-					_body[i] = prePos;
-					prePos = curPos;
+				var nextPos = _getNextPos();
+				
+				if(_hasSnack(nextPos,map)){
+					_eatSnack(map.getSnack());
+				}else{	
+					_stepForward(_body,0,nextPos);
 				}
 			}
 		},
 		turn: function(direction){
-			if( Math.abs(_direction) != Math.abs(direction)){
-				_direction = direction;
+			if( _nextDirection.length < 2){
+				_nextDirection.push(direction);
+			}
+		},
+		speedUp: function(){
+			if( _speedMode != 2 ){
+				_speedMode = 2;
+				_speed /= 2;
+			}
+		},
+		speedDown: function(){
+			if( _speedMode != 1 ){
+				_speedMode = 1;
+				_speed *= 2;
 			}
 		}
 	};
@@ -98,8 +165,8 @@ const DIRECTION = {
 	const _COLOR = {
 		map:"#999",
 		wall:"#333",
-		snakeHead:"#000",
-		snakeTail:"#fff",
+		snakeHead:"#444",
+		snakeTail:"#eee",
 		snack:"#f00"
 	};
 	
@@ -132,11 +199,16 @@ const DIRECTION = {
 		var y = mapY * _BLOCK_SIZE;
 		
 		_context.fillRect(x,y,_BLOCK_SIZE,_BLOCK_SIZE);
+		//_context.strokeStyle = "#000";
+		//_context.rect(x,y,_BLOCK_SIZE,_BLOCK_SIZE);
+		//_context.stroke();
 	}
 	
 	function _drawSnack(snack){
-		_context.fillStyle=_COLOR.snack;
-		_drawBlock(snack.X,snack.Y);
+		if( _snack.fine != 0){
+			_context.fillStyle=_COLOR.snack;
+			_drawBlock(snack.X,snack.Y);
+		}
 	}
 	
 	function _drawSnake(snake){
@@ -152,6 +224,9 @@ const DIRECTION = {
 	// public interfaces
 	/*************************************************************************/
 	return {
+		get snack(){
+			return _snack;
+		},
 		init: function(){
 			if(_context == undefined){
 				throw Error("canvas context undefined");
@@ -173,39 +248,16 @@ const DIRECTION = {
 			}
 		},
 		refresh: function(){
-			_generateSnack();
 			_context.clearRect(0,0,_mapWidth * _BLOCK_SIZE
 									,_mapHeight * _BLOCK_SIZE);
-			
 			_context.save();
-			_context.fillStyle = _COLOR.map;
-			_context.fillRect(0,0,_mapWidth * _BLOCK_SIZE
-									,_mapHeight * _BLOCK_SIZE);
 			
-			/*for(var i=0;i<_mapWidth;i++){
-				for(var j=0;j<_mapHeight;j++){
-					if(_mapState[i][j] != 0){
-						switch(_mapState[i][j]){
-							case 1:
-								_context.fillStyle = _COLOR.snakeHead;
-								break;
-							case 2:
-								_context.fillStyle = _COLOR.snakeTail;
-								break;
-							case 3:
-								_context.fillStyle=_COLOR.snack;
-								break;
-							case 4:
-								_context.fillStyle = _COLOR.wall;
-								break;
-						}
-						_drawBlock(i,j);
-					}
-				}
-			}*/
-			
+			_generateSnack();
 			_drawSnack(_snack);
+			
+			_snake.move(this);
 			_drawSnake(_snake);
+			
 			_context.restore();
 			
 			//_drawBlock(50,50);
@@ -216,6 +268,10 @@ const DIRECTION = {
 		},
 		removeSnake: function(snake){
 			_snakes.pop();
+		},
+		getSnack: function(){
+			_snack.fine = 0;
+			return _snack;
 		}
 	};
  }//SnakeMap constructor end
@@ -235,14 +291,11 @@ const DIRECTION = {
 	var _map = {};
 	var _snake = {};
 	var _keyboard = {};
-	var _bStarted = false;
+	var _isPaused = false;
 
 	/*************************************************************************/
 	//private functions
 	/*************************************************************************/
-	function _generateSnack(){
-		return ;
-	};
 	
 	function _setMap(map){
 		_map = map;
@@ -255,9 +308,11 @@ const DIRECTION = {
 		//_updateSnakeStatus(_snakes);
 		
 		
-		_snake.move();
-		_map.addSnake(_snake);
-		_map.refresh();
+		//_snake.move();
+		//_map.addSnake(_snake);
+		if(!_isPaused){
+			_map.refresh();
+		}
 	}
 	
 	function _updateSnakeStatus(snakes){
@@ -288,6 +343,7 @@ const DIRECTION = {
 				break;
 			case 13://Enter
 				console.log("speed up");
+				_snake.speedUp();
 				break;
 		}
 	}
@@ -300,6 +356,11 @@ const DIRECTION = {
 				break;
 			case 32://Space
 				console.log("pause/continue");
+				_isPaused = _isPaused ? false:true;
+				break;
+			case 13://Enter
+				console.log("speed down");
+				_snake.speedDown();
 				break;
 		}
 	}
